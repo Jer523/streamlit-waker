@@ -2,37 +2,40 @@ name: Random Streamlit Wakeup
 
 on:
   schedule:
-    - cron: '17 3 * * *' # 这是一个初始时间，会被脚本自动覆盖
-  workflow_dispatch:      # 允许你手动点击开始第一次运行
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+# 解决 Node 24 警告并强制开启写入权限
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   hit_and_reschedule:
     runs-on: ubuntu-latest
+    permissions:  # 显式声明权限，双重保险
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Visit Streamlit App
         run: |
+          # 请确保下面的网址已经换成了你自己的！
           curl -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -I https://optimaxscan-20.streamlit.app/
 
       - name: Calculate Next Run
         id: next_time
         run: |
-          # 设定最短 6 小时 (360 min)，最长 12 小时 (720 min)
           MIN=360
           MAX=720
           DIFF=$((MAX-MIN))
           RANDOM_MIN=$(( (RANDOM % DIFF) + MIN ))
-          
-          # 计算下次运行的 UTC 时间
           NEXT_DATE=$(date -u -d "$RANDOM_MIN minutes" +"%M %H %d %m *")
           echo "NEW_CRON=$NEXT_DATE" >> $GITHUB_ENV
 
       - name: Update Workflow File
         run: |
           sed -i "s|cron: '.*'|cron: '${{ env.NEW_CRON }}'|" .github/workflows/random_keep_alive.yml
-          
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "actions@github.com"
           git add .github/workflows/random_keep_alive.yml
