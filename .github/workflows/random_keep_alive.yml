@@ -1,16 +1,52 @@
-name: Simple Streamlit Wakeup
+name: Advanced Streamlit Wakeup (Random & Browser)
 
 on:
   schedule:
-    # 每天北京时间 0:00, 06:00, 12:00, 18:00 访问
-    # 对应的 UTC 时间是 16:00, 22:00, 04:00, 10:00
-    - cron: '15 4,10,16,22 * * *'
+    # 每天基础触发时间：北京时间 0:00, 6:00, 12:00, 18:00
+    - cron: '0 4,10,16,22 * * *'
   workflow_dispatch:
 
 jobs:
-  ping:
+  keep-awake:
     runs-on: ubuntu-latest
     steps:
-      - name: Visit Streamlit App
+      - name: Random Delay
+        # 如果是你手动点击 Run workflow，就不等待，直接运行；只有定时触发时才随机等待
+        if: github.event_name == 'schedule' 
         run: |
-          curl -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -I https://optimaxscan-20.streamlit.app/
+          # Generate a random number between 1 and 3600 (seconds) -> 0 to 60 minutes
+          DELAY=$((RANDOM % 3600 + 1))
+          echo "To simulate human behavior, sleeping for $DELAY seconds..."
+          sleep $DELAY
+          echo "Wake up! Proceeding to visit the website."
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright
+          npx playwright install --with-deps chromium
+
+      - name: Visit App with Real Browser
+        run: |
+          node -e "
+          const { chromium } = require('playwright');
+          (async () => {
+            console.log('Launching browser...');
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            
+            console.log('Visiting optimaxscan-20...');
+            await page.goto('https://optimaxscan-20.streamlit.app/', { waitUntil: 'networkidle', timeout: 60000 });
+            
+            console.log('Page loaded successfully! Staying for 10 seconds...');
+            await page.waitForTimeout(10000);
+            
+            await browser.close();
+            console.log('Task complete. Exiting.');
+          })();
+          "
