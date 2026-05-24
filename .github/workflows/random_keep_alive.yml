@@ -13,5 +13,5 @@ jobs:
       - name: Send HTTP Request
         run: |
           echo "正在访问网站以防止休眠..."
-          curl -s -L https://optimaxscan-20.streamlit.app/ > /dev/null
+          curl -s --max-redirs 20 -L https://optimaxscan-20.streamlit.app/ > /dev/null || true
           echo "访问完成！"
