@@ -11,7 +11,7 @@ jobs:
       - name: Wake up Streamlit app
         run: |
           pip install playwright -q
-          playwright install chromium --with-deps
+          playwright install chromium-headless-shell --with-deps
           python - <<'EOF'
           import asyncio
           from playwright.async_api import async_playwright
@@ -21,10 +21,12 @@ jobs:
                   browser = await p.chromium.launch()
                   page = await browser.new_page()
                   print("正在打开页面...")
-                  await page.goto("https://optimaxscan-20.streamlit.app/", timeout=60000)
-                  await page.wait_for_selector('[data-testid="stApp"]', timeout=60000)
+                  # 先等页面基本加载完（最多2分钟）
+                  await page.goto("https://optimaxscan-20.streamlit.app/", timeout=120000)
+                  # 等网络请求结束，比等特定元素更稳定
+                  await page.wait_for_load_state("networkidle", timeout=120000)
                   print("页面加载成功！")
-                  await asyncio.sleep(10)
+                  await asyncio.sleep(15)
                   await browser.close()
                   print("唤醒完成！")
 
