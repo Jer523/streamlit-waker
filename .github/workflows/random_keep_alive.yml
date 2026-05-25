@@ -10,8 +10,8 @@ jobs:
     steps:
       - name: Wake up Streamlit app
         run: |
-          pip install playwright --quiet
-          playwright install chromium --with-deps --quiet
+          pip install playwright -q
+          playwright install chromium --with-deps
           python - <<'EOF'
           import asyncio
           from playwright.async_api import async_playwright
