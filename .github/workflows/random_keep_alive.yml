@@ -1,4 +1,4 @@
-name: Streamlit Wakeup (Browser)
+name: Streamlit Wakeup
 on:
   schedule:
     - cron: '0 4,10,16,22 * * *'
@@ -10,25 +10,21 @@ jobs:
     steps:
       - name: Wake up Streamlit app
         run: |
-          pip install playwright -q
-          playwright install chromium-headless-shell --with-deps
+          pip install selenium -q
           python - <<'EOF'
-          import asyncio
-          from playwright.async_api import async_playwright
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          import time
 
-          async def wake_up():
-              async with async_playwright() as p:
-                  browser = await p.chromium.launch()
-                  page = await browser.new_page()
-                  print("正在打开页面...")
-                  # 先等页面基本加载完（最多2分钟）
-                  await page.goto("https://optimaxscan-20.streamlit.app/", timeout=120000)
-                  # 等网络请求结束，比等特定元素更稳定
-                  await page.wait_for_load_state("networkidle", timeout=120000)
-                  print("页面加载成功！")
-                  await asyncio.sleep(15)
-                  await browser.close()
-                  print("唤醒完成！")
+          options = Options()
+          options.add_argument('--headless')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
 
-          asyncio.run(wake_up())
+          print("正在打开页面...")
+          driver = webdriver.Chrome(options=options)
+          driver.get("https://optimaxscan-20.streamlit.app/")
+          time.sleep(30)
+          driver.quit()
+          print("唤醒完成！")
           EOF
