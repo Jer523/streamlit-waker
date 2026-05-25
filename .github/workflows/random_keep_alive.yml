@@ -1,17 +1,42 @@
-name: Streamlit Light Wakeup
-
+name: Streamlit Wakeup (Browser)
 on:
   schedule:
-    # 保持原有的频率：北京时间 12:00, 18:00, 00:00, 06:00
     - cron: '0 4,10,16,22 * * *'
-  workflow_dispatch: # 保留手动触发按钮
+  workflow_dispatch:
 
 jobs:
   wake-up:
     runs-on: ubuntu-latest
     steps:
-      - name: Send HTTP Request
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Playwright
         run: |
-          echo "正在访问网站以防止休眠..."
-          curl -s --max-redirs 20 -L https://optimaxscan-20.streamlit.app/ > /dev/null || true
-          echo "访问完成！"
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Wake up Streamlit app
+        run: |
+          python - <<'EOF'
+          import asyncio
+          from playwright.async_api import async_playwright
+
+          async def wake_up():
+              async with async_playwright() as p:
+                  browser = await p.chromium.launch()
+                  page = await browser.new_page()
+                  print("正在打开页面...")
+                  await page.goto("https://optimaxscan-20.streamlit.app/", timeout=60000)
+                  # 等待 Streamlit 完全加载（出现 stApp 元素）
+                  await page.wait_for_selector('[data-testid="stApp"]', timeout=60000)
+                  print("页面加载成功，WebSocket 已建立！")
+                  # 保持连接几秒
+                  await asyncio.sleep(10)
+                  await browser.close()
+                  print("唤醒完成！")
+
+          asyncio.run(wake_up())
+          EOF
