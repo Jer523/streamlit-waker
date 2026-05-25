@@ -24,7 +24,7 @@ jobs:
           print("正在打开页面...")
           driver = webdriver.Chrome(options=options)
           driver.get("https://optimaxscan-20.streamlit.app/")
-          time.sleep(30)
+          time.sleep(10)
           driver.quit()
           print("唤醒完成！")
           EOF
