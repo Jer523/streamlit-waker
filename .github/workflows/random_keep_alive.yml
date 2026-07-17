@@ -1,4 +1,4 @@
-name: Streamlit Wakeup
+name: Streamlit Wakeup 
 on:
   schedule:
     - cron: '0 4,10,16,22 * * *'
