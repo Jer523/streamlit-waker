@@ -1,4 +1,4 @@
-name: Optimax Streamlit Wakeup
+name: Optimax Streamlit Wakeup 
 on:
   schedule:
     - cron: '0 4,10,16,22 * * *'
